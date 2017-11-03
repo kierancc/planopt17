@@ -10,6 +10,15 @@ RelaxedTaskGraph::RelaxedTaskGraph(const TaskProxy &task_proxy)
     : relaxed_task(task_proxy),
       variable_node_ids(relaxed_task.propositions.size()) {
 
+	/*
+      TODO: add your code for exercise 2 (b) here. Afterwards
+        - variable_node_ids[i] should contain the node id of the variable node for variable i
+        - initial_node_id should contain the node id of the initial node
+        - goal_node_id should contain the node id of the goal node
+        - the graph should contain precondition and effect nodes for all operators
+        - the graph should contain all necessary edges.
+    */
+
 	/* add init AND node */
 	NodeID init_and = graph.add_node(NodeType::AND);
 
@@ -26,7 +35,7 @@ RelaxedTaskGraph::RelaxedTaskGraph(const TaskProxy &task_proxy)
 
 	/* for every operator add AND node */
 	for (RelaxedOperator o : relaxed_task.operators) {
-		NodeID operator_and = graph.add_node(NodeType::AND);
+		NodeID operator_and = graph.add_node(NodeType::AND, o.cost);
 
 		/* add edges to precond */
 		for (PropositionID id : o.preconditions) {
@@ -47,16 +56,6 @@ RelaxedTaskGraph::RelaxedTaskGraph(const TaskProxy &task_proxy)
 	/* set init_node and goal_node */
 	initial_node_id = init_and;
 	goal_node_id = goal_and;
-
-	  
-    /*
-      TODO: add your code for exercise 2 (b) here. Afterwards
-        - variable_node_ids[i] should contain the node id of the variable node for variable i
-        - initial_node_id should contain the node id of the initial node
-        - goal_node_id should contain the node id of the goal node
-        - the graph should contain precondition and effect nodes for all operators
-        - the graph should contain all necessary edges.
-    */
 }
 
 void RelaxedTaskGraph::change_initial_state(const GlobalState &global_state) {
@@ -75,24 +74,23 @@ void RelaxedTaskGraph::change_initial_state(const GlobalState &global_state) {
 }
 
 bool RelaxedTaskGraph::is_goal_relaxed_reachable() {
+	// Compute the most conservative valuation of the graph and use it to
+	// return true iff the goal is reachable in the relaxed task.
+	
 	graph.most_conservative_valuation();
 
 	if (graph.get_node(goal_node_id).forced_true) {
 		return true;
 	}
 	return false;
-
-
-    // Compute the most conservative valuation of the graph and use it to
-    // return true iff the goal is reachable in the relaxed task.
 }
 
 int RelaxedTaskGraph::additive_cost_of_goal() {
     // Compute the weighted most conservative valuation of the graph and use it
     // to return the h^add value of the goal node.
 
-    // TODO: add your code for exercise 2 (d) here.
-    return -1;
+	graph.weighted_most_conservative_valuation();
+	return graph.get_node(goal_node_id).additive_cost;
 }
 
 int RelaxedTaskGraph::ff_cost_of_goal() {
